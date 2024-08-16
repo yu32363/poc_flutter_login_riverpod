@@ -43,7 +43,7 @@ class HomeView extends ConsumerWidget {
                             builder: (context) => const EndpointView()),
                       );
                     },
-                    child: const Text('Call Next Service'),
+                    child: const Text('To Next Page'),
                   ),
           ],
         ),

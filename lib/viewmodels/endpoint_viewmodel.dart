@@ -46,9 +46,7 @@ class EndpointViewModel extends StateNotifier<EndpointState> {
   final ApiService _apiService;
   final _storage = const FlutterSecureStorage();
 
-  EndpointViewModel(this._apiService) : super(EndpointState()) {
-    loadData();
-  }
+  EndpointViewModel(this._apiService) : super(EndpointState());
 
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true);

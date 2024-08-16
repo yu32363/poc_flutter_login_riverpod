@@ -9,6 +9,7 @@ class EndpointView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final endpointState = ref.watch(endpointViewModelProvider);
+    final endpointViewModel = ref.read(endpointViewModelProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -21,21 +22,37 @@ class EndpointView extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Updated Tokens:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await endpointViewModel.loadData();
+                    },
+                    child: const Text('Call Endpoint'),
                   ),
-                  const SizedBox(height: 10),
-                  Text('Authen Token: ${endpointState.authenToken}'),
-                  const SizedBox(height: 10),
-                  Text('Client Token: ${endpointState.clientToken}'),
-                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 300,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Updated Tokens:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text('Authen Token: ${endpointState.authenToken}'),
+                          const SizedBox(height: 10),
+                          Text('Client Token: ${endpointState.clientToken}'),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
                   const Text(
                     'Available Endpoints:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Expanded(
+                  SizedBox(
+                    height: 300,
                     child: ListView.builder(
                       itemCount: endpointState.endpoints.length,
                       itemBuilder: (context, index) {
