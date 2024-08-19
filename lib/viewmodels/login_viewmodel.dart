@@ -30,8 +30,8 @@ class LoginViewModel extends StateNotifier<bool> {
 
       state = false; // Set loading state to false after successful login
     } catch (e) {
-      state = false; // Set loading state to false in case of an error
-      print('Login failed: $e'); // Log the error
+      state =
+          false; // Set loading state to false in case of an error// Log the error
       throw Exception('Login failed');
     }
   }

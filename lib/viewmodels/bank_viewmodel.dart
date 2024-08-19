@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/logger.dart';
 import '../services/api_service.dart';
+
+final logger = Logger();
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
@@ -63,7 +66,7 @@ class BankViewModel extends StateNotifier<BankState> {
         bankCodes: bankCodes,
       );
     } catch (e) {
-      print('Error fetching bank codes: $e');
+      logger.e('Error fetching bank codes $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -82,7 +85,7 @@ class BankViewModel extends StateNotifier<BankState> {
 
       state = BankState(); // Reset state
     } catch (e) {
-      print('Error during logout: $e');
+      logger.e('Error during logout $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }

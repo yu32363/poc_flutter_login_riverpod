@@ -24,17 +24,24 @@ class BankView extends ConsumerWidget {
                 children: [
                   ElevatedButton(
                     onPressed: () async {
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
                       try {
                         await viewModel.fetchBankCodes();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Bank codes fetched successfully')),
-                        );
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Bank codes fetched successfully')),
+                          );
+                        }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('Failed to fetch bank codes: $e')),
-                        );
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                                content:
+                                    Text('Failed to fetch bank codes: $e')),
+                          );
+                        }
                       }
                     },
                     child: const Text('Fetch Bank Codes'),
@@ -62,17 +69,23 @@ class BankView extends ConsumerWidget {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
                       try {
                         await viewModel.logout();
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginView()),
-                          ModalRoute.withName('/'),
-                        );
+                        if (context.mounted) {
+                          navigator.pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (context) => LoginView()),
+                            ModalRoute.withName('/'),
+                          );
+                        }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to logout: $e')),
-                        );
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text('Failed to logout: $e')),
+                          );
+                        }
                       }
                     },
                     child: const Text('Logout'),

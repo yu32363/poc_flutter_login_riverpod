@@ -4,7 +4,7 @@ import 'bank_view.dart';
 import '../viewmodels/home_viewmodel.dart';
 
 class HomeView extends ConsumerWidget {
-  const HomeView({Key? key}) : super(key: key);
+  const HomeView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,7 +64,8 @@ class HomeView extends ConsumerWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => BankView()),
+                        MaterialPageRoute(
+                            builder: (context) => const BankView()),
                       );
                     },
                     child: const Text('Go to Bank View'),

@@ -1,7 +1,10 @@
+import 'package:logger/logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:poc_flutter_login/mock_user.dart';
 import '../services/api_service.dart';
+
+final logger = Logger();
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
@@ -73,10 +76,10 @@ class HomeViewModel extends StateNotifier<HomeState> {
       if (authenToken != null) {
         await _updateMobileInfoAndFetchEndpoints(authenToken, deviceInfo);
       } else {
-        print('No authenToken found');
+        logger.w('No authenToken found');
       }
     } catch (e) {
-      print('Error during initialization: $e');
+      logger.e('Error during initialization $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -115,8 +118,12 @@ class HomeViewModel extends StateNotifier<HomeState> {
   }
 
   Future<void> _fetchEndpoints(String authenToken) async {
-    final endpointResult = await _apiService.callEndpointService(authenToken);
-    state = state.copyWith(endpoints: endpointResult['listAllowEndpoint']);
+    try {
+      final endpointResult = await _apiService.callEndpointService(authenToken);
+      state = state.copyWith(endpoints: endpointResult['listAllowEndpoint']);
+    } catch (e) {
+      logger.e('Error fetching endpoints $e');
+    }
   }
 
   Future<void> fetchBankCodes() async {
@@ -130,7 +137,7 @@ class HomeViewModel extends StateNotifier<HomeState> {
         state = state.copyWith(endpoints: bankCodes);
       }
     } catch (e) {
-      print('Error fetching bank codes: $e');
+      logger.e('Error fetching bank codes $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -139,9 +146,13 @@ class HomeViewModel extends StateNotifier<HomeState> {
   Future<void> logout() async {
     final authenToken = state.authenToken;
     if (authenToken != null) {
-      await _apiService.logout(authenToken: authenToken);
-      await _storage.deleteAll();
-      state = HomeState(); // Reset state
+      try {
+        await _apiService.logout(authenToken: authenToken);
+        await _storage.deleteAll();
+        state = HomeState(); // Reset state
+      } catch (e) {
+        logger.e('Error during logout $e');
+      }
     }
   }
 }

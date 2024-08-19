@@ -36,17 +36,24 @@ class LoginView extends ConsumerWidget {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
                       try {
                         await ref.read(loginViewModelProvider.notifier).login(
                               userNameController.text = mockUsername,
                               passwordController.text = mockPassword,
                             );
-                        // Navigate to home screen or next step
-                        Navigator.pushReplacementNamed(context, '/home');
+                        // Check if the widget is still mounted before navigating
+                        if (context.mounted) {
+                          navigator.pushReplacementNamed('/home');
+                        }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Login failed: $e')),
-                        );
+                        // Check if the widget is still mounted before showing a SnackBar
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text('Login failed: $e')),
+                          );
+                        }
                       }
                     },
                     child: const Text('Login'),
