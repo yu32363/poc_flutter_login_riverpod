@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../services/api_service.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) {
@@ -21,7 +20,7 @@ class LoginViewModel extends StateNotifier<bool> {
   LoginViewModel(this._apiService) : super(false);
 
   Future<void> login(String userName, String password) async {
-    state = true; // Loading state
+    state = true; // Set loading state to true
     try {
       final tokens = await _apiService.login(userName, password);
 
@@ -29,9 +28,10 @@ class LoginViewModel extends StateNotifier<bool> {
       await _storage.write(key: 'authenToken', value: tokens['authenToken']);
       await _storage.write(key: 'clientToken', value: tokens['clientToken']);
 
-      state = false;
+      state = false; // Set loading state to false after successful login
     } catch (e) {
-      state = false;
+      state = false; // Set loading state to false in case of an error
+      print('Login failed: $e'); // Log the error
       throw Exception('Login failed');
     }
   }

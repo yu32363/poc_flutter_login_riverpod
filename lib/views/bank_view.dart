@@ -40,12 +40,14 @@ class BankView extends ConsumerWidget {
                     child: const Text('Fetch Bank Codes'),
                   ),
                   const SizedBox(height: 20),
-                  if (bankState.bankCodes != null)
+                  if (bankState.bankCodes != null &&
+                      bankState.bankCodes!.isNotEmpty)
                     Expanded(
                       child: ListView.builder(
                         itemCount: bankState.bankCodes!.length,
                         itemBuilder: (context, index) {
-                          final bank = bankState.bankCodes![index];
+                          final bank = bankState.bankCodes![index]
+                              as Map<String, dynamic>;
                           return ListTile(
                             title:
                                 Text(bank['bankNameEN'] ?? 'No English Name'),
@@ -54,7 +56,9 @@ class BankView extends ConsumerWidget {
                           );
                         },
                       ),
-                    ),
+                    )
+                  else
+                    const Text('No bank codes available.'),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () async {

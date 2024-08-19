@@ -24,7 +24,16 @@ class EndpointView extends ConsumerWidget {
                 children: [
                   ElevatedButton(
                     onPressed: () async {
-                      await endpointViewModel.loadData();
+                      try {
+                        await endpointViewModel.loadData();
+                      } catch (e) {
+                        // Handle the error, possibly showing a message to the user
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to load data: $e'),
+                          ),
+                        );
+                      }
                     },
                     child: const Text('Call Endpoint'),
                   ),
@@ -32,15 +41,18 @@ class EndpointView extends ConsumerWidget {
                     height: 300,
                     child: SingleChildScrollView(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Updated Tokens:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
-                          Text('Authen Token: ${endpointState.authenToken}'),
+                          Text(
+                              'Authen Token: ${endpointState.authenToken ?? 'N/A'}'),
                           const SizedBox(height: 10),
-                          Text('Client Token: ${endpointState.clientToken}'),
+                          Text(
+                              'Client Token: ${endpointState.clientToken ?? 'N/A'}'),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -51,8 +63,7 @@ class EndpointView extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    height: 300,
+                  Expanded(
                     child: ListView.builder(
                       itemCount: endpointState.endpoints.length,
                       itemBuilder: (context, index) {

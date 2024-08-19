@@ -9,7 +9,8 @@ final apiServiceProvider = Provider<ApiService>((ref) {
 final bankViewModelProvider = StateNotifierProvider<BankViewModel, BankState>(
   (ref) {
     final apiService = ref.watch(apiServiceProvider);
-    return BankViewModel(apiService);
+    const storage = FlutterSecureStorage();
+    return BankViewModel(apiService, storage);
   },
 );
 
@@ -43,9 +44,9 @@ class BankState {
 
 class BankViewModel extends StateNotifier<BankState> {
   final ApiService _apiService;
-  final _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
 
-  BankViewModel(this._apiService) : super(BankState());
+  BankViewModel(this._apiService, this._storage) : super(BankState());
 
   Future<void> fetchBankCodes() async {
     state = state.copyWith(isLoading: true);
@@ -55,16 +56,12 @@ class BankViewModel extends StateNotifier<BankState> {
         throw Exception('No authenToken found');
       }
 
-      final result =
+      final bankCodes =
           await _apiService.callGetBankCodes(authenToken: authenToken);
 
-      await _storage.write(key: 'authenToken', value: result['authenToken']);
-      await _storage.write(key: 'clientToken', value: result['clientToken']);
-
       state = state.copyWith(
-        authenToken: result['authenToken'],
-        clientToken: result['clientToken'],
-        bankCodes: result['bankCodes'],
+        authenToken: authenToken,
+        bankCodes: bankCodes,
         isLoading: false,
       );
     } catch (e) {
@@ -82,11 +79,14 @@ class BankViewModel extends StateNotifier<BankState> {
       }
 
       await _apiService.logout(authenToken: authenToken);
-
-      // Clear the stored tokens on logout
       await _storage.deleteAll();
 
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        authenToken: null,
+        clientToken: null,
+        bankCodes: null,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false);
       throw Exception('Failed to logout: $e');

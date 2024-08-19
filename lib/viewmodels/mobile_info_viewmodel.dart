@@ -52,8 +52,7 @@ class MobileInfoViewModel extends StateNotifier<MobileInfoState> {
   Future<void> retrieveAndSaveMobileInfo() async {
     state = state.copyWith(isLoading: true);
     try {
-      final deviceInfo = await _apiService
-          .getDeviceInfo(); // Assuming this method returns a map of device info
+      final deviceInfo = await _apiService.getDeviceInfo();
 
       // Save the mobile info to secure storage
       for (var entry in deviceInfo.entries) {
@@ -88,12 +87,18 @@ class MobileInfoViewModel extends StateNotifier<MobileInfoState> {
         mobileInfo: mobileInfo,
       );
 
-      await _storage.write(key: 'authenToken', value: result['authenToken']);
-      await _storage.write(key: 'clientToken', value: result['clientToken']);
+      // Check if the result contains the tokens and update them
+      final newAuthenToken = result['authenToken'] ?? authenToken;
+      final newClientToken =
+          result['clientToken'] ?? await _storage.read(key: 'clientToken');
+
+      // Save tokens to secure storage
+      await _storage.write(key: 'authenToken', value: newAuthenToken);
+      await _storage.write(key: 'clientToken', value: newClientToken);
 
       state = state.copyWith(
-        authenToken: result['authenToken'],
-        clientToken: result['clientToken'],
+        authenToken: newAuthenToken,
+        clientToken: newClientToken,
         isLoading: false,
       );
     } catch (e) {
@@ -102,13 +107,14 @@ class MobileInfoViewModel extends StateNotifier<MobileInfoState> {
     }
   }
 
+  // Load the stored mobile info from secure storage
   Future<void> loadStoredMobileInfo() async {
     state = state.copyWith(isLoading: true);
     try {
       final mobileInfo = {
+        'deviceId': await _storage.read(key: 'deviceId') ?? 'N/A',
         'mobileInfo': await _storage.read(key: 'mobileInfo') ?? 'N/A',
         'mobileOsVersion': await _storage.read(key: 'mobileOsVersion') ?? 'N/A',
-        'deviceId': await _storage.read(key: 'deviceId') ?? 'N/A',
       };
 
       final authenToken = await _storage.read(key: 'authenToken');

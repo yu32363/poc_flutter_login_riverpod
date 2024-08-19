@@ -56,21 +56,23 @@ class EndpointViewModel extends StateNotifier<EndpointState> {
 
       if (authenToken != null) {
         final result = await _apiService.callEndpointService(authenToken);
-        await _storage.write(key: 'authenToken', value: result['authenToken']);
-        await _storage.write(key: 'clientToken', value: result['clientToken']);
 
+        final newAuthenToken = result['authenToken'] ?? authenToken;
+        final newClientToken = result['clientToken'] ?? clientToken;
+
+        // Store the new tokens
+        await _storage.write(key: 'authenToken', value: newAuthenToken);
+        await _storage.write(key: 'clientToken', value: newClientToken);
+
+        // Update the state
         state = state.copyWith(
-          authenToken: result['authenToken'],
-          clientToken: result['clientToken'],
+          authenToken: newAuthenToken,
+          clientToken: newClientToken,
           endpoints: result['data']['listAllowEndpoint'],
           isLoading: false,
         );
       } else {
-        state = state.copyWith(
-          authenToken: authenToken,
-          clientToken: clientToken,
-          isLoading: false,
-        );
+        state = state.copyWith(isLoading: false);
       }
     } catch (e) {
       state = state.copyWith(isLoading: false);
