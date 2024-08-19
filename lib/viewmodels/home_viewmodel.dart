@@ -52,9 +52,11 @@ class HomeState {
 
 class HomeViewModel extends StateNotifier<HomeState> {
   final ApiService _apiService;
-  final _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
 
-  HomeViewModel(this._apiService) : super(HomeState()) {
+  HomeViewModel(this._apiService)
+      : _storage = const FlutterSecureStorage(),
+        super(HomeState()) {
     _init();
   }
 
@@ -64,50 +66,57 @@ class HomeViewModel extends StateNotifier<HomeState> {
     try {
       // Step 1: Retrieve and save mobile info
       final deviceInfo = await _apiService.getDeviceInfo();
-
-      // Save the mobile info to secure storage
-      for (var entry in deviceInfo.entries) {
-        await _storage.write(key: entry.key, value: entry.value);
-      }
-
-      state = state.copyWith(mobileInfo: deviceInfo);
+      await _saveMobileInfo(deviceInfo);
 
       // Step 2: Send mobile info to backend
       final authenToken = await _storage.read(key: 'authenToken');
-      final userName = mockUsername; // Replace with actual username
       if (authenToken != null) {
-        final result = await _apiService.callPutMobileInfo(
-          authenToken: authenToken,
-          userName: userName,
-          mobileInfo: deviceInfo,
-        );
-
-        final newAuthenToken = result['authenToken'] ?? authenToken;
-        final newClientToken =
-            result['clientToken'] ?? await _storage.read(key: 'clientToken');
-
-        await _storage.write(key: 'authenToken', value: newAuthenToken);
-        await _storage.write(key: 'clientToken', value: newClientToken);
-
-        state = state.copyWith(
-          authenToken: newAuthenToken,
-          clientToken: newClientToken,
-          statusPutMobileInfo: 'Mobile info updated successfully',
-        );
-
-        // Step 3: Call endpoint service
-        final endpointResult =
-            await _apiService.callEndpointService(newAuthenToken);
-        state = state.copyWith(
-          endpoints: endpointResult['data']['listAllowEndpoint'],
-        );
+        await _updateMobileInfoAndFetchEndpoints(authenToken, deviceInfo);
+      } else {
+        print('No authenToken found');
       }
-
-      state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       print('Error during initialization: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
+  }
+
+  Future<void> _saveMobileInfo(Map<String, String> deviceInfo) async {
+    for (var entry in deviceInfo.entries) {
+      await _storage.write(key: entry.key, value: entry.value);
+    }
+    state = state.copyWith(mobileInfo: deviceInfo);
+  }
+
+  Future<void> _updateMobileInfoAndFetchEndpoints(
+      String authenToken, Map<String, String> deviceInfo) async {
+    final userName = mockUsername; // Replace with actual username
+    final result = await _apiService.callPutMobileInfo(
+      authenToken: authenToken,
+      userName: userName,
+      mobileInfo: deviceInfo,
+    );
+
+    final newAuthenToken = result['authenToken'] ?? authenToken;
+    final newClientToken =
+        result['clientToken'] ?? await _storage.read(key: 'clientToken');
+
+    await _storage.write(key: 'authenToken', value: newAuthenToken);
+    await _storage.write(key: 'clientToken', value: newClientToken);
+
+    state = state.copyWith(
+      authenToken: newAuthenToken,
+      clientToken: newClientToken,
+      statusPutMobileInfo: 'Mobile info updated successfully',
+    );
+
+    await _fetchEndpoints(newAuthenToken);
+  }
+
+  Future<void> _fetchEndpoints(String authenToken) async {
+    final endpointResult = await _apiService.callEndpointService(authenToken);
+    state = state.copyWith(endpoints: endpointResult['listAllowEndpoint']);
   }
 
   Future<void> fetchBankCodes() async {
@@ -118,13 +127,12 @@ class HomeViewModel extends StateNotifier<HomeState> {
         final bankCodes = await _apiService.callGetBankCodes(
           authenToken: authenToken,
         );
-        state = state.copyWith(endpoints: bankCodes, isLoading: false);
-      } else {
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(endpoints: bankCodes);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       print('Error fetching bank codes: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 

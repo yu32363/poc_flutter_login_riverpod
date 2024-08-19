@@ -60,13 +60,12 @@ class BankViewModel extends StateNotifier<BankState> {
           await _apiService.callGetBankCodes(authenToken: authenToken);
 
       state = state.copyWith(
-        authenToken: authenToken,
         bankCodes: bankCodes,
-        isLoading: false,
       );
     } catch (e) {
+      print('Error fetching bank codes: $e');
+    } finally {
       state = state.copyWith(isLoading: false);
-      throw Exception('Failed to fetch bank codes: $e');
     }
   }
 
@@ -81,15 +80,11 @@ class BankViewModel extends StateNotifier<BankState> {
       await _apiService.logout(authenToken: authenToken);
       await _storage.deleteAll();
 
-      state = state.copyWith(
-        authenToken: null,
-        clientToken: null,
-        bankCodes: null,
-        isLoading: false,
-      );
+      state = BankState(); // Reset state
     } catch (e) {
+      print('Error during logout: $e');
+    } finally {
       state = state.copyWith(isLoading: false);
-      throw Exception('Failed to logout: $e');
     }
   }
 }
