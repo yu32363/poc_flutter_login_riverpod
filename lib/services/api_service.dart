@@ -10,17 +10,10 @@ class ApiService {
       'NGVjODI5MmYzNDg3NWQ1NDE2OTc0YmQxZjQzNjc2MGYzNjA2ODNhOTY1OTAyNjg3NGRkNjNmNmI2NzZiZDQ1M2FmMDgxNWNjY2U2NWI2YWYxZGZmYTVlYWNjYTk5OWFlNDk2MjRkZDU4ZTBiZDUwNTdhMGIyZmZmNTAxYTY2OGE=';
 
   String _generateRefID() {
-    final now = DateTime.now();
-    final formattedDate =
-        '${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}'
-        '${_twoDigits(now.hour)}${_twoDigits(now.minute)}${_twoDigits(now.second)}'
-        '${now.millisecond.toString().padLeft(3, '0')}';
-    return 'o2-crd-api-$formattedDate';
+    final String refID = 'o2-crd-api-${DateTime.now().millisecondsSinceEpoch}';
+    return refID;
   }
 
-  String _twoDigits(int n) => n.toString().padLeft(2, '0');
-
-  // Fixed refID and correlationID for the login method
   final String _loginRefID = 'o2-crd-api-20240805223759323';
   final String _loginCorrelationID = 'corr-crd-api-20240805223759323';
 
@@ -42,24 +35,26 @@ class ApiService {
       }),
     );
 
+    dynamic responseBody;
     if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      final authenToken = responseBody['data']['authenToken'];
-      final clientToken = responseBody['data']['clientToken'];
-
-      return {
-        'authenToken': authenToken,
-        'clientToken': clientToken,
-      };
+      responseBody = json.decode(response.body);
+      if (responseBody['status'] == '0') {
+        final authenToken = responseBody['data']['authenToken'];
+        final clientToken = responseBody['data']['clientToken'];
+        return {
+          'authenToken': authenToken,
+          'clientToken': clientToken,
+        };
+      }
     } else {
-      throw Exception('Failed to login: ${response.statusCode}');
+      responseBody = json.decode(response.body);
     }
+    throw Exception(
+        'Failed to login Status Code: ${response.statusCode} Error Code: ${responseBody['errorCode']}');
   }
 
   // Endpoint service method
   Future<Map<String, dynamic>> callEndpointService(String authenToken) async {
-    // Generate a new refID
-    // final String refID = 'o2-crd-api-${DateTime.now().millisecondsSinceEpoch}';
     final String refID = _generateRefID();
 
     final response = await http.get(
@@ -91,6 +86,7 @@ class ApiService {
     }
   }
 
+  // Get Device Info method
   Future<Map<String, String>> getDeviceInfo() async {
     final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     String deviceId = '';
@@ -120,15 +116,13 @@ class ApiService {
     };
   }
 
-  // Call PUT API with the saved mobile info
+  // Put Device Info method
   Future<Map<String, dynamic>> callPutMobileInfo({
     required String authenToken,
     required String userName,
     required Map<String, String> mobileInfo,
   }) async {
     final String refID = _generateRefID();
-    final String correlationID =
-        'corr-crd-api-${DateTime.now().millisecondsSinceEpoch}';
 
     final response = await http.put(
       Uri.parse('$_baseUrl/user-info/mobile-info'),
@@ -139,7 +133,7 @@ class ApiService {
       },
       body: json.encode({
         "refID": refID,
-        "correlationID": correlationID,
+        "correlationID": _loginCorrelationID,
         "data": {
           "userName": userName,
           "deviceId": mobileInfo['deviceId'],
@@ -166,11 +160,10 @@ class ApiService {
     }
   }
 
+  // Get Bank Code method
   Future<Map<String, dynamic>> callGetBankCodes(
       {required String authenToken}) async {
     final String refID = 'o2-crd-api-${DateTime.now().millisecondsSinceEpoch}';
-    final String correlationID =
-        'corr-crd-api-${DateTime.now().millisecondsSinceEpoch}';
 
     final response = await http.get(
       Uri.parse('$_baseUrl/master/bank-code'),
@@ -178,7 +171,7 @@ class ApiService {
         'API-Key': _apiKey,
         'req-data': json.encode({
           "refID": refID,
-          "correlationID": correlationID,
+          "correlationID": _loginCorrelationID,
           "data": {"userName": "50T02002"},
         }),
         'X-Client-Session-Token': authenToken,
@@ -200,10 +193,9 @@ class ApiService {
     }
   }
 
+  // Logout method
   Future<void> logout({required String authenToken}) async {
     final String refID = 'o2-crd-api-${DateTime.now().millisecondsSinceEpoch}';
-    final String correlationID =
-        'corr-crd-api-${DateTime.now().millisecondsSinceEpoch}';
 
     final response = await http.post(
       Uri.parse('$_baseUrl/authen/logout'),
@@ -214,7 +206,7 @@ class ApiService {
       },
       body: json.encode({
         "refID": refID,
-        "correlationID": correlationID,
+        "correlationID": _loginCorrelationID,
         "data": {"userName": "313429"},
       }),
     );
